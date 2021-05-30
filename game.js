@@ -4,19 +4,54 @@ var gameOptions = {
     tweenSpeed: 50,
     tileSpacing: 20
 }
+
 window.onload = function() {
     var gameConfig = {
-       type: Phaser.CANVAS,
-       width: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
-       height: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
-       backgroundColor: 0xecf0f1,
-       scene: [playGame]
+        type: Phaser.CANVAS,
+        width: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
+        height: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
+        backgroundColor: 0xfaf7ac,
+        scene: [titleScene, playGame],
+        fps: {
+            target: 30,
+            forceSetTimeOut: true
+        },
+        audio: {
+            disableWebAudio: true
+        }
    };
     game = new Phaser.Game(gameConfig);
     window.focus()
     resize();
     window.addEventListener("resize", resize, false);
 }
+
+var titleScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function titleScene() {
+        Phaser.Scene.call(this, {key: "TitleScene"});
+    },
+    preload: function() {
+        this.load.image("background", "assets/background.png");
+        this.load.image("button", "assets/play.png");
+        this.load.audio('theme', 'assets/audio/bensound-littleidea.mp3');
+    },
+    create: function() {
+        music = this.sound.add('theme');
+        music.volume = 0.5;
+        music.loop = true;
+        music.play();
+        this.add.image(0, 0, 'background').setOrigin(0, 0);
+        var playButton = this.add.image(450, 700, 'button').setDepth(1);
+        playButton.setInteractive();
+        this.input.on('gameobjectdown', this.onObjectClicked, this);
+    },
+    onObjectClicked: function() {
+        this.scene.start('PlayGame')
+    }
+})
+
 var playGame = new Phaser.Class({
     Extends: Phaser.Scene,
     initialize:
@@ -29,10 +64,18 @@ var playGame = new Phaser.Class({
             frameWidth: gameOptions.tileSize,
             frameHeight: gameOptions.tileSize
         });
+        this.load.audio('theme', 'assets/audio/bensound-littleidea.mp3');
+        this.load.audio('score', 'assets/audio/pop.ogg');
     },
     create: function(){
         this.fieldArray = [];
         this.fieldGroup = this.add.group();
+        music = this.sound.add('theme');
+        music.volume = 0.25;
+        music.loop = true;
+        music.play();
+        score = this.sound.add('score');
+        score.volume = 1;
         for(var i = 0; i < 4; i++){
             this.fieldArray[i] = [];
             for(var j = 0; j < 4; j++){
@@ -53,6 +96,7 @@ var playGame = new Phaser.Class({
         this.addTwo();
         this.input.on("pointerup", this.endSwipe, this);
     },
+
     endSwipe: function(e){
         var swipeTime = e.upTime - e.downTime;
         var swipe = new Phaser.Geom.Point(e.upX - e.downX, e.upY - e.downY);
@@ -241,6 +285,7 @@ var playGame = new Phaser.Class({
                 }
             }
         }
+        score.play();
     },
     isInsideBoard: function(row, col){
         return (row >= 0) && (col >= 0) && (row < 4) && (col < 4);

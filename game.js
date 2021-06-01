@@ -11,7 +11,7 @@ window.onload = function() {
         width: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
         height: gameOptions.tileSize * 4 + gameOptions.tileSpacing * 5,
         backgroundColor: 0xfaf7ac,
-        scene: [titleScene, playGame],
+        scene: [titleScene, playGame, gameOverScene],
         fps: {
             target: 30,
             forceSetTimeOut: true
@@ -33,8 +33,8 @@ var titleScene = new Phaser.Class({
         Phaser.Scene.call(this, {key: "TitleScene"});
     },
     preload: function() {
-        this.load.image("background", "assets/background.png");
-        this.load.image("button", "assets/play.png");
+        this.load.image("background", "assets/images/background.png");
+        this.load.image("button", "assets/images/play.png");
         this.load.audio('theme', 'assets/audio/bensound-littleidea.mp3');
     },
     create: function() {
@@ -49,6 +49,39 @@ var titleScene = new Phaser.Class({
     },
     onObjectClicked: function() {
         this.scene.start('PlayGame')
+    }
+})
+
+var gameOverScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function gameOverScene() {
+        Phaser.Scene.call(this, {key: "GameOverScene"});
+    },
+    preload: function() {
+        this.load.image("gameover", "assets/images/gameover.png");
+        this.load.image("exit", "assets/images/continue.png");
+        this.load.audio('theme', 'assets/audio/bensound-littleidea.mp3');
+        this.load.bitmapFont('minecraft', 'assets/fonts/minecraft.png', 'assets/fonts/minecraft.xml');
+    },
+    create: function() {
+        music = this.sound.add('theme');
+        music.volume = 0.5;
+        music.loop = true;
+        music.play();
+
+        this.add.image(450, 300, 'gameover');
+
+        var Button = this.add.image(450, 700, 'exit').setDepth(0);
+        Button.setInteractive();
+        this.input.on('gameobjectdown', this.onObjectClicked, this);
+
+        var text = this.add.bitmapText(450, 700, 'minecraft', 'CONTINUE', 45).setOrigin(0.5);
+        text.tintFill
+    },
+
+    onObjectClicked: function() {
+        this.scene.start('TitleScene')
     }
 })
 
@@ -152,6 +185,9 @@ var playGame = new Phaser.Class({
             duration: gameOptions.tweenSpeed,
             onComplete: function(tween){
                 tween.parent.scene.canMove = true;
+
+                // when a move is completed, check for game over
+                tween.parent.scene.checkGameOver();
             },
         });
 	},
@@ -292,6 +328,33 @@ var playGame = new Phaser.Class({
     },
     tileDestination: function(pos){
         return pos * (gameOptions.tileSize + gameOptions.tileSpacing) + gameOptions.tileSize / 2 + gameOptions.tileSpacing
+    },
+    checkGameOver: function(){
+
+        // loop through the entire board
+        for(var i = 0; i < 4; i++){
+            for(var j = 0; j < 4; j++){
+
+                // if there is an empty tile, it's not game over
+                if(this.fieldArray[i][j].tileValue == 0){
+                    return;
+                }
+
+                // if there are two vertical adjacent tiles with the same value, it's not game over
+                if((i < 3) && this.fieldArray[i][j].tileValue == this.fieldArray[i + 1][j].tileValue){
+                    return;
+                }
+
+                // if there are two horizontal adjacent tiles with the same value, it's not game over
+                if((j < 3) && this.fieldArray[i][j].tileValue == this.fieldArray[i][j + 1].tileValue){
+                    return
+                }
+            }
+        }
+
+        // ok, it's definitively game over
+        this.scene.start('GameOverScene')
+        alert("no more moves");
     }
 });
 function resize() {

@@ -38,7 +38,7 @@ Project sẽ apply các công nghệ sau:
 * Vanilla JavaScript
 
 ## Các chức năng nâng cao có thể phát triển cho game:
-* Nút Pause
+* Nút Mute
 * Bảng điểm
 * Cho phép người chơi tự upload bài hát để làm nhạc background
 * Undo về nước đi trước đó
